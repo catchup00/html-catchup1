@@ -1,0 +1,76 @@
+<!-- Firebase + Netlify Integration Example with Auth for Messages Page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CatchUp Youth Messages</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <style>
+    #messageForm { display: none; margin-bottom: 20px; }
+    input, textarea { display: block; margin: 10px 0; width: 300px; }
+  </style>
+</head>
+<body>
+  <h1>CatchUp Youth Messages</h1>
+
+  <form id="messageForm">
+    <input type="text" id="author" placeholder="Your Name" required />
+    <textarea id="message" placeholder="Your Message" required></textarea>
+    <button type="submit">Post Message</button>
+  </form>
+
+  <ul id="messageList"></ul>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.database();
+    const form = document.getElementById("messageForm");
+    const list = document.getElementById("messageList");
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        if (user.email === "youremail@gmail.com") {
+          form.style.display = "block";
+        } else {
+          form.style.display = "none";
+        }
+      } else {
+        auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      }
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const author = document.getElementById("author").value;
+      const message = document.getElementById("message").value;
+      db.ref("messages").push({ author, message });
+      form.reset();
+    });
+
+    db.ref("messages").on("value", (snapshot) => {
+      list.innerHTML = "";
+      snapshot.forEach((child) => {
+        const data = child.val();
+        const li = document.createElement("li");
+        li.textContent = `${data.author}: ${data.message}`;
+        list.appendChild(li);
+      });
+    });
+  </script>
+</body>
+</html>
