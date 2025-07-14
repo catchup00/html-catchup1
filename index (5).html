@@ -1,0 +1,76 @@
+<!-- Firebase + Netlify Integration Example with Auth -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CatchUp Opportunities</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <style>
+    #opportunityForm { display: none; margin-bottom: 20px; }
+    input, textarea { display: block; margin: 10px 0; width: 300px; }
+  </style>
+</head>
+<body>
+  <h1>CatchUp Youth Opportunities</h1>
+
+  <form id="opportunityForm">
+    <input type="text" id="title" placeholder="Opportunity Title" required />
+    <textarea id="description" placeholder="Opportunity Description" required></textarea>
+    <button type="submit">Add Opportunity</button>
+  </form>
+
+  <ul id="opportunityList"></ul>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.database();
+    const form = document.getElementById("opportunityForm");
+    const list = document.getElementById("opportunityList");
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        if (user.email === "youremail@gmail.com") {
+          form.style.display = "block";
+        } else {
+          form.style.display = "none";
+        }
+      } else {
+        auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      }
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      db.ref("opportunities").push({ title, description });
+      form.reset();
+    });
+
+    db.ref("opportunities").on("value", (snapshot) => {
+      list.innerHTML = "";
+      snapshot.forEach((child) => {
+        const data = child.val();
+        const li = document.createElement("li");
+        li.textContent = `${data.title}: ${data.description}`;
+        list.appendChild(li);
+      });
+    });
+  </script>
+</body>
+</html>
