@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Opportunities Manager</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+    .opportunity { margin: 10px 0; padding: 10px; background: white; border-left: 5px solid #2196F3; }
+    .btn { padding: 10px; background: #2196F3; color: white; border: none; cursor: pointer; margin-top: 10px; }
+    .btn-delete { background: #f44336; }
+  </style>
+</head>
+<body>
+
+<h2>Manage Opportunities</h2>
+
+<div id="authSection">
+  <button onclick="login()" class="btn">Login with Google</button>
+</div>
+
+<div id="managerSection" style="display:none;">
+  <h3>Add New Opportunity</h3>
+  <input type="text" id="title" placeholder="Title"><br>
+  <textarea id="description" placeholder="Description"></textarea><br>
+  <button onclick="addOpportunity()" class="btn">Add</button>
+
+  <h3>All Opportunities</h3>
+  <div id="opportunityList"></div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  function login() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider)
+      .then(result => {
+        const user = result.user;
+        if (user.email === "catchup018@gmail.com") {
+          document.getElementById("authSection").style.display = "none";
+          document.getElementById("managerSection").style.display = "block";
+          loadOpportunities();
+        } else {
+          alert("Access denied. Only the manager can access this section.");
+        }
+      });
+  }
+
+  function addOpportunity() {
+    const title = document.getElementById("title").value;
+    const description = document.getElementById("description").value;
+    const newOpp = {
+      title,
+      description,
+      timestamp: Date.now()
+    };
+    firebase.database().ref("opportunities").push(newOpp);
+    document.getElementById("title").value = '';
+    document.getElementById("description").value = '';
+    loadOpportunities();
+  }
+
+  function deleteOpportunity(key) {
+    firebase.database().ref("opportunities/" + key).remove();
+    loadOpportunities();
+  }
+
+  function loadOpportunities() {
+    const list = document.getElementById("opportunityList");
+    list.innerHTML = '';
+    firebase.database().ref("opportunities").once("value", snapshot => {
+      snapshot.forEach(child => {
+        const opp = child.val();
+        const div = document.createElement("div");
+        div.className = "opportunity";
+        div.innerHTML = `<b>${opp.title}</b><p>${opp.description}</p><button onclick="deleteOpportunity('${child.key}')" class="btn btn-delete">Delete</button>`;
+        list.appendChild(div);
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
